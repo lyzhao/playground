@@ -1,20 +1,29 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
-import type { ActionData } from "../routes/app._index";
+import type { ActionData } from "../actions/indexActions";
 
 export function useProductActions() {
   const fetcher = useFetcher<ActionData>();
+  const [actionData, setActionData] = useState<ActionData | undefined>(undefined);
 
-  const generateProduct = useCallback(() => 
-    fetcher.submit({ action: "generateProduct" }, { method: "POST" }), [fetcher]);
+  const generateProduct = useCallback(() => {
+    fetcher.submit({ action: "generateProduct" }, { method: "POST" });
+  }, [fetcher]);
 
-  const isLoading = ["loading", "submitting"].includes(fetcher.state) && fetcher.formMethod === "POST";
-  const productId = fetcher.data?.type === "product" ? fetcher.data.product.id.replace("gid://shopify/Product/", "") : undefined;
+  useEffect(() => {
+    setActionData(undefined);
+    if (fetcher.state === "idle" && fetcher.data && fetcher.data.type === "product") {
+      setActionData(fetcher.data);
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  const isLoading = fetcher.state === "submitting" && fetcher.formData?.get("action") === "generateProduct";
+  const productId = actionData?.type === "product" ? actionData.product.id.replace("gid://shopify/Product/", "") : undefined;
 
   return {
     generateProduct,
     isLoading,
-    actionData: fetcher.data,
-    productId
+    productId,
+    actionData
   };
 }

@@ -1,4 +1,33 @@
-export async function createProduct(admin: any) {
+// Instead, define a simple interface for the admin object
+interface AdminApiContext {
+  graphql: (query: string, variables?: Record<string, unknown>) => Promise<{ json: () => Promise<any> }>;
+}
+
+export type ProductType = {
+  id: string;
+  title: string;
+  handle: string;
+  status: string;
+  variants: {
+    edges: Array<{
+      node: {
+        id: string;
+        price: string;
+        barcode: string;
+        createdAt: string;
+      };
+    }>;
+  };
+};
+
+export type VariantType = {
+  id: string;
+  price: string;
+  barcode: string;
+  createdAt: string;
+};
+
+export async function createProduct(admin: AdminApiContext): Promise<ProductType> {
   const color = ["Red", "Orange", "Yellow", "Green"][Math.floor(Math.random() * 4)];
   const response = await admin.graphql(
     `#graphql
@@ -34,7 +63,7 @@ export async function createProduct(admin: any) {
   return responseJson.data.productCreate.product;
 }
 
-export async function updateProductVariant(admin: any, product: any) {
+export async function updateProductVariant(admin: AdminApiContext, product: ProductType): Promise<VariantType[]> {
   const variantId = product.variants.edges[0].node.id;
   const variantResponse = await admin.graphql(
     `#graphql
@@ -58,15 +87,3 @@ export async function updateProductVariant(admin: any, product: any) {
   const variantResponseJson = await variantResponse.json();
   return variantResponseJson.data.productVariantsBulkUpdate.productVariants;
 }
-
-export type ProductType = {
-  id: string;
-  title: string;
-  // ... other properties
-};
-
-export type VariantType = {
-  id: string;
-  price: string;
-  // ... other properties
-};

@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (action === "generateProduct") {
       const product = await createProduct(admin);
       const variant = await updateProductVariant(admin, product);
-      return json<ActionData>({ type: "product", product, variant });
+      return json<ActionData>({ type: "product", product, variant: variant[0] });
     } else if (action === "fetchMarkets") {
       const markets = await fetchMarkets(admin);
       return json<ActionData>({ type: "markets", markets });
