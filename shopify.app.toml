@@ -3,7 +3,7 @@
 client_id = "a75197f851536ff6b2ad25b2fff952ac"
 name = "test-market-app"
 handle = "test-market-app-2"
-application_url = "https://progress-table-vocals-elite.trycloudflare.com"
+application_url = "https://grown-one-knit-snowboard.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_analytics,read_assigned_fulfillment_orders,read_content,read_cont
 
 [auth]
 redirect_urls = [
-  "https://progress-table-vocals-elite.trycloudflare.com/auth/callback",
-  "https://progress-table-vocals-elite.trycloudflare.com/auth/shopify/callback",
-  "https://progress-table-vocals-elite.trycloudflare.com/api/auth/callback"
+  "https://grown-one-knit-snowboard.trycloudflare.com/auth/callback",
+  "https://grown-one-knit-snowboard.trycloudflare.com/auth/shopify/callback",
+  "https://grown-one-knit-snowboard.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

@@ -58,3 +58,15 @@ export async function updateProductVariant(admin: any, product: any) {
   const variantResponseJson = await variantResponse.json();
   return variantResponseJson.data.productVariantsBulkUpdate.productVariants;
 }
+
+export type ProductType = {
+  id: string;
+  title: string;
+  // ... other properties
+};
+
+export type VariantType = {
+  id: string;
+  price: string;
+  // ... other properties
+};

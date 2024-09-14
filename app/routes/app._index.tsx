@@ -1,11 +1,11 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useFetcher } from "@remix-run/react";
-import { Page, Layout, Button, BlockStack } from "@shopify/polaris";
+import { Page, Layout, BlockStack } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
-import { createProduct, updateProductVariant } from "../utils/productUtils";
+import { createProduct, updateProductVariant, ProductType, VariantType } from "../utils/productUtils";
+import { fetchMarkets, MarketType } from "../utils/marketUtils";
 import { MainCard } from "../components/MainCard";
 import { AppSpecsCard } from "../components/AppSpecsCard";
 import { NextStepsCard } from "../components/NextStepsCard";
@@ -15,29 +15,34 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return null;
 };
 
+export type ActionData = 
+  | { type: "product"; product: ProductType; variant: VariantType }
+  | { type: "markets"; markets: MarketType[] }
+  | { type: "error"; error: string };
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   
-  const product = await createProduct(admin);
-  const variant = await updateProductVariant(admin, product);
+  const formData = await request.formData();
+  const action = formData.get("action");
 
-  return json({ product, variant });
+  try {
+    if (action === "generateProduct") {
+      const product = await createProduct(admin);
+      const variant = await updateProductVariant(admin, product);
+      return json<ActionData>({ type: "product", product, variant });
+    } else if (action === "fetchMarkets") {
+      const markets = await fetchMarkets(admin);
+      return json<ActionData>({ type: "markets", markets });
+    }
+    throw new Error("Invalid action");
+  } catch (error) {
+    return json<ActionData>({ type: "error", error: (error as Error).message }, { status: 400 });
+  }
 };
 
 export default function Index() {
-  const fetcher = useFetcher<typeof action>();
   const shopify = useAppBridge();
-  
-  const isLoading = ["loading", "submitting"].includes(fetcher.state) && fetcher.formMethod === "POST";
-  const productId = fetcher.data?.product?.id.replace("gid://shopify/Product/", "");
-
-  useEffect(() => {
-    if (productId) {
-      shopify.toast.show("Product created");
-    }
-  }, [productId, shopify]);
-
-  const generateProduct = useCallback(() => fetcher.submit({}, { method: "POST" }), [fetcher]);
 
   return (
     <Page>
@@ -45,12 +50,7 @@ export default function Index() {
       <BlockStack gap="500">
         <Layout>
           <Layout.Section>
-            <MainCard
-              isLoading={isLoading}
-              generateProduct={generateProduct}
-              productData={fetcher.data}
-              productId={productId}
-            />
+            <MainCard />
           </Layout.Section>
           <Layout.Section variant="oneThird">
             <BlockStack gap="500">
