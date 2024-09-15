@@ -2,11 +2,12 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { createProduct, updateProductVariant, ProductType, VariantType } from "../utils/productUtils";
-import { fetchMarkets, MarketType } from "../utils/marketUtils";
+import { fetchMarkets, createRandomMarket, MarketType } from "../utils/marketUtils";
 
 export type ActionData = 
   | { type: "product"; product: ProductType; variant: VariantType }
   | { type: "markets"; markets: MarketType[] }
+  | { type: "marketCreated"; market: MarketType }
   | { type: "error"; error: string };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -23,6 +24,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     } else if (action === "fetchMarkets") {
       const markets = await fetchMarkets(admin);
       return json<ActionData>({ type: "markets", markets });
+    } else if (action === "createRandomMarket") {
+      const market = await createRandomMarket(admin);
+      return json<ActionData>({ type: "marketCreated", market });
     }
     throw new Error("Invalid action");
   } catch (error) {

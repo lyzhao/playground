@@ -1,4 +1,4 @@
-import { Text, Box } from "@shopify/polaris";
+import { Box, Text } from "@shopify/polaris";
 import { ActionData } from "../actions/indexActions";
 
 interface ResultDisplayProps {
@@ -12,29 +12,25 @@ export function ResultDisplay({ data }: ResultDisplayProps) {
     <>
       {data.type === "product" && (
         <>
-          <Text as="h3" variant="headingMd">
-            Product Created
-          </Text>
-          <DataBox title="Product Details" content={data.product} />
-          <DataBox title="Variant Details" content={data.variant} />
+          <DataBox title="Product Created" subtitle="Product Details" content={data.product} />
+          <DataBox subtitle="Variant Details" content={data.variant} />
         </>
       )}
       {data.type === "markets" && (
-        <>
-          <Text as="h3" variant="headingMd">
-            Fetched Markets
-          </Text>
-          <DataBox title="Markets" content={data.markets} />
-        </>
+        <DataBox title="Fetched Markets" subtitle="Markets" content={data.markets} />
+      )}
+      {data.type === "marketCreated" && (
+        <DataBox title="Market Created" subtitle="New Market" content={data.market} />
       )}
     </>
   );
 }
 
-function DataBox({ title, content }: { title: string; content: any }) {
+function DataBox({ title, subtitle, content }: { title?: string; subtitle: string; content: any }) {
   return (
     <>
-      <Text as="h4" variant="headingMd">{title}</Text>
+      {title && <Text as="h3" variant="headingMd">{title}</Text>}
+      <Text as="h4" variant="headingMd">{subtitle}</Text>
       <Box
         padding="400"
         background="bg-surface-active"

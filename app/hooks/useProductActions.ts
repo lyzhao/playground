@@ -1,29 +1,57 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useReducer, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import type { ActionData } from "../actions/indexActions";
 
+type ProductState = {
+  isLoading: boolean;
+  error: string | null;
+  data: Extract<ActionData, { type: "product" }> | null;
+};
+
+type ProductAction =
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; payload: Extract<ActionData, { type: "product" }> }
+  | { type: "FETCH_ERROR"; payload: string };
+
+function productReducer(state: ProductState, action: ProductAction): ProductState {
+  switch (action.type) {
+    case "FETCH_START":
+      return { ...state, isLoading: true, error: null };
+    case "FETCH_SUCCESS":
+      return { ...state, isLoading: false, data: action.payload, error: null };
+    case "FETCH_ERROR":
+      return { ...state, isLoading: false, error: action.payload, data: null };
+    default:
+      return state;
+  }
+}
+
 export function useProductActions() {
   const fetcher = useFetcher<ActionData>();
-  const [actionData, setActionData] = useState<ActionData | undefined>(undefined);
+  const [state, dispatch] = useReducer(productReducer, {
+    isLoading: false,
+    error: null,
+    data: null,
+  });
 
   const generateProduct = useCallback(() => {
+    dispatch({ type: "FETCH_START" });
     fetcher.submit({ action: "generateProduct" }, { method: "POST" });
   }, [fetcher]);
 
   useEffect(() => {
-    setActionData(undefined);
-    if (fetcher.state === "idle" && fetcher.data && fetcher.data.type === "product") {
-      setActionData(fetcher.data);
+    if (fetcher.data && fetcher.data.type === "product") {
+      dispatch({ type: "FETCH_SUCCESS", payload: fetcher.data });
+    } else if (fetcher.data && fetcher.data.type === "error") {
+      dispatch({ type: "FETCH_ERROR", payload: fetcher.data.error });
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.data]);
 
-  const isLoading = fetcher.state === "submitting" && fetcher.formData?.get("action") === "generateProduct";
-  const productId = actionData?.type === "product" ? actionData.product.id.replace("gid://shopify/Product/", "") : undefined;
+  const productId = state.data?.product.id.replace("gid://shopify/Product/", "");
 
   return {
     generateProduct,
-    isLoading,
+    ...state,
     productId,
-    actionData
   };
 }
