@@ -1,25 +1,38 @@
-import { Card, BlockStack, InlineStack, Button, Banner } from "@shopify/polaris";
+import { Card, BlockStack, InlineStack, Button } from "@shopify/polaris";
 import { useProductActions } from "../hooks/useProductActions";
 import { useMarketActions } from "../hooks/useMarketActions";
+import { ActionData } from "../actions/indexActions";
+import { useState, useCallback, useEffect } from "react";
 import { ResultDisplay } from "./ResultDisplay";
-import { useCallback } from "react";
 
 export function MainCard() {
-  const { generateProduct, isLoading: isProductLoading, data: productData, error: productError, productId } = useProductActions();
-  const { 
-    fetchAllMarkets, 
-    createRandomMarket, 
-    isLoading: isMarketLoading,
-    data: marketData,
-    error: marketError
-  } = useMarketActions();
+  const { generateProduct, isLoading: isProductLoading, productId, data: productData } = useProductActions();
+  const { fetchAllMarkets, createRandomMarket, isLoading: isMarketLoading, data: marketData } = useMarketActions();
+  const [resultData, setResultData] = useState<ActionData | undefined>(undefined);
 
-  const handleGenerateProduct = useCallback(() => generateProduct(), [generateProduct]);
-  const handleFetchAllMarkets = useCallback(() => fetchAllMarkets(), [fetchAllMarkets]);
-  const handleCreateRandomMarket = useCallback(() => createRandomMarket(), [createRandomMarket]);
+  const handleGenerateProduct = useCallback(() => {
+    generateProduct();
+  }, [generateProduct]);
 
-  const resultData = productData || marketData;
-  const error = productError || marketError;
+  const handleFetchAllMarkets = useCallback(() => {
+    fetchAllMarkets();
+  }, [fetchAllMarkets]);
+
+  const handleCreateRandomMarket = useCallback(() => {
+    createRandomMarket();
+  }, [createRandomMarket]);
+
+  useEffect(() => {
+    if (productData) {
+      setResultData(productData);
+    }
+  }, [productData]);
+
+  useEffect(() => {
+    if (marketData) {
+      setResultData(marketData);
+    }
+  }, [marketData]);
 
   return (
     <Card>
@@ -34,14 +47,13 @@ export function MainCard() {
           <Button onClick={handleCreateRandomMarket} loading={isMarketLoading}>
             Create random market
           </Button>
-          {productId && (
+          {resultData?.type === "product" && (
             <Button url={`shopify:admin/products/${productId}`} target="_blank" variant="plain">
               View product
             </Button>
           )}
         </InlineStack>
-        {error && <Banner tone="critical">{error}</Banner>}
-        {resultData && <ResultDisplay data={resultData} />}
+        <ResultDisplay data={resultData} />
       </BlockStack>
     </Card>
   );
