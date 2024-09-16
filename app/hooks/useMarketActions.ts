@@ -2,11 +2,12 @@ import { useCallback, useReducer, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import type { ActionData } from "../actions/indexActions";
 
-type MarketState = {
-  isLoading: boolean;
-  error: string | null;
-  data: Extract<ActionData, { type: "markets" | "marketCreated" }> | null;
-};
+type MarketState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; error: string }
+  | { status: 'success'; type: 'markets'; data: Extract<ActionData, { type: "markets" }> }
+  | { status: 'success'; type: 'marketCreated'; data: Extract<ActionData, { type: "marketCreated" }> };
 
 type MarketAction =
   | { type: "FETCH_START" }
@@ -16,11 +17,16 @@ type MarketAction =
 function marketReducer(state: MarketState, action: MarketAction): MarketState {
   switch (action.type) {
     case "FETCH_START":
-      return { ...state, isLoading: true, error: null };
+      return { status: 'loading' };
     case "FETCH_SUCCESS":
-      return { ...state, isLoading: false, data: action.payload, error: null };
+      if (action.payload.type === "markets") {
+        return { status: 'success', type: 'markets', data: action.payload };
+      } else if (action.payload.type === "marketCreated") {
+        return { status: 'success', type: 'marketCreated', data: action.payload };
+      }
+      return state; // Default case if the type is neither "markets" nor "marketCreated"
     case "FETCH_ERROR":
-      return { ...state, isLoading: false, error: action.payload, data: null };
+      return { status: 'error', error: action.payload };
     default:
       return state;
   }
@@ -28,11 +34,7 @@ function marketReducer(state: MarketState, action: MarketAction): MarketState {
 
 export function useMarketActions() {
   const fetcher = useFetcher<ActionData>();
-  const [state, dispatch] = useReducer(marketReducer, {
-    isLoading: false,
-    error: null,
-    data: null,
-  });
+  const [state, dispatch] = useReducer(marketReducer, { status: 'idle' });
 
   const fetchAllMarkets = useCallback(() => {
     dispatch({ type: "FETCH_START" });
@@ -45,16 +47,18 @@ export function useMarketActions() {
   }, [fetcher]);
 
   useEffect(() => {
-    if (fetcher.data && (fetcher.data.type === "markets" || fetcher.data.type === "marketCreated")) {
-      dispatch({ type: "FETCH_SUCCESS", payload: fetcher.data });
-    } else if (fetcher.data && fetcher.data.type === "error") {
-      dispatch({ type: "FETCH_ERROR", payload: fetcher.data.error });
+    if (fetcher.data) {
+      if (fetcher.data.type === "markets" || fetcher.data.type === "marketCreated") {
+        dispatch({ type: "FETCH_SUCCESS", payload: fetcher.data });
+      } else if (fetcher.data.type === "error") {
+        dispatch({ type: "FETCH_ERROR", payload: fetcher.data.error });
+      }
     }
   }, [fetcher.data]);
 
   return {
     fetchAllMarkets,
     createRandomMarket,
-    ...state,
+    state,
   };
 }
