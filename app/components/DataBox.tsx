@@ -1,14 +1,15 @@
 import { BlockStack, Text, Box } from "@shopify/polaris";
+import React from "react";
 
-interface DataBoxProps {
+interface DataBoxProps<T> {
   title?: string;
   subtitle: string;
-  content: any;
+  content: T;
 }
 
-export function DataBox({ title, subtitle, content }: DataBoxProps) {
+export const DataBox = function DataBox<T>({ title, subtitle, content }: DataBoxProps<T>) {
   return (
-    <BlockStack gap="200">
+    <BlockStack gap="200" aria-label={title || subtitle}>
       {title && <Text as="h3" variant="headingMd">{title}</Text>}
       <Text as="h4" variant="headingMd">{subtitle}</Text>
       <Box
@@ -18,6 +19,8 @@ export function DataBox({ title, subtitle, content }: DataBoxProps) {
         borderRadius="200"
         borderColor="border"
         overflowX="scroll"
+        role="presentation"
+        aria-live="polite"
       >
         <pre style={{ margin: 0 }}>
           <code>{JSON.stringify(content, null, 2)}</code>
@@ -25,4 +28,4 @@ export function DataBox({ title, subtitle, content }: DataBoxProps) {
       </Box>
     </BlockStack>
   );
-}
+};
